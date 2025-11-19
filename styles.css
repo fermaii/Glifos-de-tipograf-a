@@ -89,3 +89,35 @@ main {
     font-weight: bold;
     margin-top: 15px;
 }
+
+
+
+
+/* Nuevo estilo para el contenedor del título y el botón */
+.header-controls {
+    display: flex;
+    justify-content: space-between; /* Espacia el título y el botón */
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+/* Estilo básico del botón de copia */
+#copyButton {
+    background-color: #2ecc71; /* Verde */
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.3s;
+}
+
+#copyButton:hover {
+    background-color: #27ae60;
+}
+
+#copyButton:disabled {
+    background-color: #bdc3c7;
+    cursor: not-allowed;
+}
