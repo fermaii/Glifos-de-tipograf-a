@@ -35,10 +35,40 @@ main {
     margin-bottom: 20px;
 }
 
+/* Contenedor del título y el botón de copia */
+.header-controls {
+    display: flex;
+    justify-content: space-between; 
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+/* Estilo del botón de copia */
+#copyButton {
+    background-color: #2ecc71; 
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.3s;
+}
+
+#copyButton:hover {
+    background-color: #27ae60;
+}
+
+#copyButton:disabled {
+    background-color: #bdc3c7;
+    cursor: not-allowed;
+}
+
+
 /* Contenedor principal de la cuadrícula de glifos */
 #glyphGrid {
     display: grid;
-    /* Crear columnas responsivas (mínimo 100px) */
+    /* Crear columnas responsivas */
     grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); 
     gap: 10px;
     margin-top: 20px;
@@ -47,12 +77,9 @@ main {
 /* Contenedor individual de cada glifo */
 .glyph-item {
     border: 1px solid #eee;
-    padding: 5px;
+    padding: 10px 5px; /* Ajuste para el canvas */
     border-radius: 4px;
     text-align: center;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
     background-color: #fafafa;
     transition: background-color 0.2s;
 }
@@ -62,13 +89,23 @@ main {
     border-color: #007bff;
 }
 
-/* Visualización del carácter del glifo */
+/* El elemento CANVAS que dibuja el glifo */
 .char-display {
-    font-size: 3em; /* Tamaño grande para el glifo */
-    height: 1.5em;
-    line-height: 1.5em;
-    color: #2c3e50;
+    width: 80px;
+    height: 80px;
+    display: block; /* Asegura que el canvas se muestre bien */
+    margin: 0 auto;
 }
+
+/* Label del carácter Unicode (si existe) */
+.unicode-label {
+    font-size: 1.5em;
+    font-family: Arial, sans-serif; 
+    margin-top: 5px;
+    color: #007bff;
+    font-weight: bold;
+}
+
 
 /* Información adicional (ID, Unicode) */
 .info-display {
@@ -88,36 +125,4 @@ main {
     color: #e67e22;
     font-weight: bold;
     margin-top: 15px;
-}
-
-
-
-
-/* Nuevo estilo para el contenedor del título y el botón */
-.header-controls {
-    display: flex;
-    justify-content: space-between; /* Espacia el título y el botón */
-    align-items: center;
-    margin-bottom: 15px;
-}
-
-/* Estilo básico del botón de copia */
-#copyButton {
-    background-color: #2ecc71; /* Verde */
-    color: white;
-    border: none;
-    padding: 8px 15px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-weight: bold;
-    transition: background-color 0.3s;
-}
-
-#copyButton:hover {
-    background-color: #27ae60;
-}
-
-#copyButton:disabled {
-    background-color: #bdc3c7;
-    cursor: not-allowed;
 }
