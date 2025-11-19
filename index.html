@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visualizador de Glifos</title>
+    <link rel="stylesheet" href="styles.css"> 
+    
+    <script src="https://cdn.jsdelivr.net/npm/opentype.js@1.3.4/dist/opentype.min.js"></script>
+</head>
+<body>
+
+    <header>
+        <h1>Cargador y Visualizador de Glifos de Tipografía</h1>
+        <p>Sube un archivo .ttf, .otf, .woff o .woff2 para ver todos sus glifos.</p>
+    </header>
+
+    <main>
+        <input type="file" id="fontFileInput" accept=".ttf, .otf, .woff, .woff2">
+        <p id="message" class="hidden">Cargando glifos...</p>
+
+        <div id="glyphDisplay" class="hidden">
+            <h2>Glifos Encontrados (<span id="glyphCount">0</span>)</h2>
+            <div id="glyphGrid">
+                </div>
+        </div>
+    </main>
+
+    <script>
+        document.getElementById('fontFileInput').addEventListener('change', handleFontUpload);
+
+        // Nombre de familia que usaremos temporalmente para la fuente cargada
+        const FONT_FAMILY_NAME = 'user-uploaded-font'; 
+
+        /**
+         * Maneja la carga del archivo, inyecta la fuente y muestra los glifos.
+         */
+        function handleFontUpload(event) {
+            const fontFile = event.target.files[0];
+            if (!fontFile) return;
+
+            const message = document.getElementById('message');
+            const glyphDisplay = document.getElementById('glyphDisplay');
+            const glyphGrid = document.getElementById('glyphGrid');
+            const glyphCount = document.getElementById('glyphCount');
+            
+            // Ocultar resultados anteriores y mostrar mensaje de carga
+            glyphDisplay.classList.add('hidden');
+            message.textContent = "Cargando glifos...";
+            message.classList.remove('hidden');
+            glyphGrid.innerHTML = ''; // Limpiar cuadrícula
+            glyphCount.textContent = '0';
+
+            const reader = new FileReader();
+
+            // Al cargar el archivo en la memoria del navegador...
+            reader.onload = function(e) {
+                const fontUrl = e.target.result; // Data URL de la fuente (ej: data:font/ttf;base64,...)
+                
+                // 1. INYECTAR LA FUENTE EN CSS
+                injectFontFace(fontUrl);
+                
+                // 2. ANALIZAR LA FUENTE CON OPENTYPE.JS Y MOSTRAR GLIFOS
+                displayGlyphs(fontUrl, message, glyphDisplay, glyphGrid, glyphCount);
+            };
+
+            // Leer el archivo como Data URL
+            reader.readAsDataURL(fontFile);
+        }
+
+        /**
+         * Inyecta la regla @font-face en el head del documento.
+         */
+        function injectFontFace(fontUrl) {
+            let style = document.getElementById('customFontStyles');
+            if (!style) {
+                style = document.createElement('style');
+                style.id = 'customFontStyles';
+                document.head.appendChild(style);
+            }
+            
+            // Crea la regla @font-face usando la Data URL y la inyecta
+            style.innerHTML = `
+                @font-face {
+                    font-family: '${FONT_FAMILY_NAME}';
+                    src: url('${fontUrl}') format('truetype'), 
+                         url('${fontUrl}') format('opentype'),
+                         url('${fontUrl}') format('woff'),
+                         url('${fontUrl}') format('woff2');
+                }
+            `;
+        }
+
+        /**
+         * Analiza la fuente y renderiza los glifos.
+         */
+        function displayGlyphs(fontUrl, message, glyphDisplay, glyphGrid, glyphCount) {
+            // opentype.js carga la fuente desde la Data URL
+            opentype.load(fontUrl, function(err, font) {
+                message.classList.add('hidden'); // Ocultar mensaje de carga
+                
+                if (err) {
+                    message.textContent = 'Error al cargar o analizar la fuente: ' + err;
+                    message.classList.remove('hidden');
+                    return;
+                }
+
+                const totalGlyphs = font.glyphs.length;
+                glyphCount.textContent = totalGlyphs;
+
+                for (let i = 0; i < totalGlyphs; i++) {
+                    const glyph = font.glyphs.get(i);
+                    const charCode = glyph.unicode;
+                    let char = '';
+                    let titleText = `ID: ${glyph.index}`; // ID del glifo por defecto
+
+                    if (charCode) {
+                        // Si tiene un código Unicode, obtenemos el carácter
+                        char = String.fromCharCode(charCode);
+                        titleText += ` | Unicode: U+${charCode.toString(16).toUpperCase()}`;
+                    } else {
+                        // Si no tiene Unicode asociado, usamos el espacio (no podemos mostrarlo)
+                        char = ' '; 
+                        titleText += ' | No tiene Unicode asociado';
+                    }
+
+                    const glyphElement = document.createElement('span');
+                    glyphElement.className = 'glyph-item';
+                    
+                    // Contenedor para el glifo
+                    const charDisplay = document.createElement('div');
+                    charDisplay.className = 'char-display';
+                    charDisplay.textContent = char;
+                    charDisplay.style.fontFamily = FONT_FAMILY_NAME; // Aplicar la fuente cargada
+                    
+                    // Contenedor para el detalle (ID/Unicode)
+                    const infoDisplay = document.createElement('div');
+                    infoDisplay.className = 'info-display';
+                    infoDisplay.textContent = titleText;
+                    
+                    glyphElement.appendChild(charDisplay);
+                    glyphElement.appendChild(infoDisplay);
+                    
+                    glyphGrid.appendChild(glyphElement);
+                }
+
+                glyphDisplay.classList.remove('hidden'); // Mostrar resultados
+            });
+        }
+    </script>
+</body>
+</html>
