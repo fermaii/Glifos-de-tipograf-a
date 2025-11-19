@@ -22,7 +22,7 @@
         <div id="glyphDisplay" class="hidden">
             <div class="header-controls">
                 <h2>Glifos Encontrados (<span id="glyphCount">0</span>)</h2>
-                <button id="copyButton" onclick="copyGlyphsToClipboard()">📋 Copiar Glifos</button>
+                <button id="copyButton" onclick="copyGlyphsToClipboard()">📋 Copiar Caracteres</button>
             </div>
             
             <div id="glyphGrid">
@@ -33,14 +33,10 @@
     <script>
         document.getElementById('fontFileInput').addEventListener('change', handleFontUpload);
 
-        // Nombre de familia que usaremos temporalmente para la fuente cargada
         const FONT_FAMILY_NAME = 'user-uploaded-font'; 
-        // Array global para almacenar los caracteres (glifos con Unicode)
+        // Array global para almacenar los caracteres (solo glifos que tienen Unicode asociado)
         let visibleGlyphs = []; 
 
-        /**
-         * Maneja la carga del archivo, inyecta la fuente y muestra los glifos.
-         */
         function handleFontUpload(event) {
             const fontFile = event.target.files[0];
             if (!fontFile) return;
@@ -50,13 +46,12 @@
             const glyphGrid = document.getElementById('glyphGrid');
             const glyphCount = document.getElementById('glyphCount');
             
-            // Ocultar resultados anteriores y mostrar mensaje de carga
             glyphDisplay.classList.add('hidden');
             message.textContent = "Cargando glifos...";
             message.classList.remove('hidden');
-            glyphGrid.innerHTML = ''; // Limpiar cuadrícula
+            glyphGrid.innerHTML = '';
             glyphCount.textContent = '0';
-            visibleGlyphs = []; // Limpiar array de glifos
+            visibleGlyphs = [];
 
             const reader = new FileReader();
 
@@ -90,9 +85,12 @@
         }
 
         /**
-         * Analiza la fuente y renderiza los glifos, guardándolos en el array global.
+         * Analiza la fuente y renderiza los glifos usando Canvas.
          */
         function displayGlyphs(fontUrl, message, glyphDisplay, glyphGrid, glyphCount) {
+            // Establecer un tamaño de canvas fijo
+            const CANVAS_SIZE = 80;
+            
             opentype.load(fontUrl, function(err, font) {
                 message.classList.add('hidden');
                 
@@ -114,28 +112,50 @@
                     if (charCode) {
                         char = String.fromCharCode(charCode);
                         titleText += ` | Unicode: U+${charCode.toString(16).toUpperCase()}`;
-                        // ⭐️ ALMACENAR CARACTERES VISIBLES (solo los que tienen Unicode)
-                        visibleGlyphs.push(char);
+                        // Almacenar solo caracteres Unicode válidos para copiar
+                        visibleGlyphs.push(char); 
                     } else {
                         char = ' '; 
-                        titleText += ' | No tiene Unicode asociado';
+                        titleText += ' | Sin Unicode';
                     }
 
                     const glyphElement = document.createElement('span');
                     glyphElement.className = 'glyph-item';
                     
-                    const charDisplay = document.createElement('div');
+                    // USAR CANVAS PARA DIBUJAR LA FORMA VECTORIAL DEL GLIFO
+                    const charDisplay = document.createElement('canvas');
                     charDisplay.className = 'char-display';
-                    charDisplay.textContent = char;
-                    charDisplay.style.fontFamily = FONT_FAMILY_NAME;
+                    charDisplay.width = CANVAS_SIZE;
+                    charDisplay.height = CANVAS_SIZE;
                     
+                    const ctx = charDisplay.getContext('2d');
+                    
+                    const scaleFactor = 0.8;
+                    const fontSize = CANVAS_SIZE * scaleFactor;
+                    
+                    ctx.fillStyle = '#2c3e50'; 
+                    
+                    // Dibujar el glifo: ajustamos la Y para que esté centrado visualmente
+                    glyph.draw(ctx, 
+                               CANVAS_SIZE * 0.1, 
+                               CANVAS_SIZE * 0.8, 
+                               fontSize);
+
+                    // Contenedor para el detalle (ID/Unicode)
                     const infoDisplay = document.createElement('div');
                     infoDisplay.className = 'info-display';
                     infoDisplay.textContent = titleText;
                     
+                    // Si tiene Unicode, mostramos el carácter Unicode debajo del glifo dibujado
+                    if (charCode) {
+                        const unicodeLabel = document.createElement('div');
+                        unicodeLabel.className = 'unicode-label';
+                        unicodeLabel.textContent = char;
+                        glyphElement.appendChild(unicodeLabel);
+                    }
+
                     glyphElement.appendChild(charDisplay);
                     glyphElement.appendChild(infoDisplay);
-                    
                     glyphGrid.appendChild(glyphElement);
                 }
 
@@ -145,12 +165,9 @@
 
         // --- FUNCIÓN DE COPIADO AL PORTAPAPELES ---
 
-        /**
-         * Copia todos los glifos visibles (caracteres Unicode) al portapapeles.
-         */
         function copyGlyphsToClipboard() {
             const button = document.getElementById('copyButton');
-            // Unir todos los caracteres del array en una sola cadena sin separador.
+            // Unir todos los caracteres visibles en una sola cadena.
             const textToCopy = visibleGlyphs.join(''); 
             
             if (textToCopy.length === 0) {
@@ -158,20 +175,19 @@
                 return;
             }
 
-            // Usamos la API del Portapapeles (Clipboard API), moderna y asíncrona.
             navigator.clipboard.writeText(textToCopy)
                 .then(() => {
                     // Feedback visual al usuario
                     button.textContent = '✅ ¡Copiado!';
                     button.disabled = true;
                     setTimeout(() => {
-                        button.textContent = '📋 Copiar Glifos';
+                        button.textContent = '📋 Copiar Caracteres';
                         button.disabled = false;
                     }, 2000);
                 })
                 .catch(err => {
                     console.error('Error al copiar:', err);
-                    alert('Error al copiar al portapapeles. Asegúrate de que el navegador lo permite.');
+                    alert('Error al copiar al portapapeles. (Requiere HTTPS o servidor local)');
                 });
         }
     </script>
