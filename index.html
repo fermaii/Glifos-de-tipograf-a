@@ -20,7 +20,11 @@
         <p id="message" class="hidden">Cargando glifos...</p>
 
         <div id="glyphDisplay" class="hidden">
-            <h2>Glifos Encontrados (<span id="glyphCount">0</span>)</h2>
+            <div class="header-controls">
+                <h2>Glifos Encontrados (<span id="glyphCount">0</span>)</h2>
+                <button id="copyButton" onclick="copyGlyphsToClipboard()">📋 Copiar Glifos</button>
+            </div>
+            
             <div id="glyphGrid">
                 </div>
         </div>
@@ -31,6 +35,8 @@
 
         // Nombre de familia que usaremos temporalmente para la fuente cargada
         const FONT_FAMILY_NAME = 'user-uploaded-font'; 
+        // Array global para almacenar los caracteres (glifos con Unicode)
+        let visibleGlyphs = []; 
 
         /**
          * Maneja la carga del archivo, inyecta la fuente y muestra los glifos.
@@ -50,27 +56,20 @@
             message.classList.remove('hidden');
             glyphGrid.innerHTML = ''; // Limpiar cuadrícula
             glyphCount.textContent = '0';
+            visibleGlyphs = []; // Limpiar array de glifos
 
             const reader = new FileReader();
 
-            // Al cargar el archivo en la memoria del navegador...
             reader.onload = function(e) {
-                const fontUrl = e.target.result; // Data URL de la fuente (ej: data:font/ttf;base64,...)
+                const fontUrl = e.target.result;
                 
-                // 1. INYECTAR LA FUENTE EN CSS
                 injectFontFace(fontUrl);
-                
-                // 2. ANALIZAR LA FUENTE CON OPENTYPE.JS Y MOSTRAR GLIFOS
                 displayGlyphs(fontUrl, message, glyphDisplay, glyphGrid, glyphCount);
             };
 
-            // Leer el archivo como Data URL
             reader.readAsDataURL(fontFile);
         }
 
-        /**
-         * Inyecta la regla @font-face en el head del documento.
-         */
         function injectFontFace(fontUrl) {
             let style = document.getElementById('customFontStyles');
             if (!style) {
@@ -79,7 +78,6 @@
                 document.head.appendChild(style);
             }
             
-            // Crea la regla @font-face usando la Data URL y la inyecta
             style.innerHTML = `
                 @font-face {
                     font-family: '${FONT_FAMILY_NAME}';
@@ -92,12 +90,11 @@
         }
 
         /**
-         * Analiza la fuente y renderiza los glifos.
+         * Analiza la fuente y renderiza los glifos, guardándolos en el array global.
          */
         function displayGlyphs(fontUrl, message, glyphDisplay, glyphGrid, glyphCount) {
-            // opentype.js carga la fuente desde la Data URL
             opentype.load(fontUrl, function(err, font) {
-                message.classList.add('hidden'); // Ocultar mensaje de carga
+                message.classList.add('hidden');
                 
                 if (err) {
                     message.textContent = 'Error al cargar o analizar la fuente: ' + err;
@@ -112,14 +109,14 @@
                     const glyph = font.glyphs.get(i);
                     const charCode = glyph.unicode;
                     let char = '';
-                    let titleText = `ID: ${glyph.index}`; // ID del glifo por defecto
+                    let titleText = `ID: ${glyph.index}`;
 
                     if (charCode) {
-                        // Si tiene un código Unicode, obtenemos el carácter
                         char = String.fromCharCode(charCode);
                         titleText += ` | Unicode: U+${charCode.toString(16).toUpperCase()}`;
+                        // ⭐️ ALMACENAR CARACTERES VISIBLES (solo los que tienen Unicode)
+                        visibleGlyphs.push(char);
                     } else {
-                        // Si no tiene Unicode asociado, usamos el espacio (no podemos mostrarlo)
                         char = ' '; 
                         titleText += ' | No tiene Unicode asociado';
                     }
@@ -127,13 +124,11 @@
                     const glyphElement = document.createElement('span');
                     glyphElement.className = 'glyph-item';
                     
-                    // Contenedor para el glifo
                     const charDisplay = document.createElement('div');
                     charDisplay.className = 'char-display';
                     charDisplay.textContent = char;
-                    charDisplay.style.fontFamily = FONT_FAMILY_NAME; // Aplicar la fuente cargada
+                    charDisplay.style.fontFamily = FONT_FAMILY_NAME;
                     
-                    // Contenedor para el detalle (ID/Unicode)
                     const infoDisplay = document.createElement('div');
                     infoDisplay.className = 'info-display';
                     infoDisplay.textContent = titleText;
@@ -144,8 +139,40 @@
                     glyphGrid.appendChild(glyphElement);
                 }
 
-                glyphDisplay.classList.remove('hidden'); // Mostrar resultados
+                glyphDisplay.classList.remove('hidden');
             });
+        }
+
+        // --- FUNCIÓN DE COPIADO AL PORTAPAPELES ---
+
+        /**
+         * Copia todos los glifos visibles (caracteres Unicode) al portapapeles.
+         */
+        function copyGlyphsToClipboard() {
+            const button = document.getElementById('copyButton');
+            // Unir todos los caracteres del array en una sola cadena sin separador.
+            const textToCopy = visibleGlyphs.join(''); 
+            
+            if (textToCopy.length === 0) {
+                alert('No hay glifos cargados para copiar.');
+                return;
+            }
+
+            // Usamos la API del Portapapeles (Clipboard API), moderna y asíncrona.
+            navigator.clipboard.writeText(textToCopy)
+                .then(() => {
+                    // Feedback visual al usuario
+                    button.textContent = '✅ ¡Copiado!';
+                    button.disabled = true;
+                    setTimeout(() => {
+                        button.textContent = '📋 Copiar Glifos';
+                        button.disabled = false;
+                    }, 2000);
+                })
+                .catch(err => {
+                    console.error('Error al copiar:', err);
+                    alert('Error al copiar al portapapeles. Asegúrate de que el navegador lo permite.');
+                });
         }
     </script>
 </body>
