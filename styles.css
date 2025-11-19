@@ -1,0 +1,91 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+    background-color: #f4f4f9;
+    color: #333;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding: 15px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+    color: #007bff;
+}
+
+main {
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Estilo del input de archivo */
+#fontFileInput {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 20px;
+}
+
+/* Contenedor principal de la cuadrícula de glifos */
+#glyphGrid {
+    display: grid;
+    /* Crear columnas responsivas (mínimo 100px) */
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); 
+    gap: 10px;
+    margin-top: 20px;
+}
+
+/* Contenedor individual de cada glifo */
+.glyph-item {
+    border: 1px solid #eee;
+    padding: 5px;
+    border-radius: 4px;
+    text-align: center;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    background-color: #fafafa;
+    transition: background-color 0.2s;
+}
+
+.glyph-item:hover {
+    background-color: #e6f7ff;
+    border-color: #007bff;
+}
+
+/* Visualización del carácter del glifo */
+.char-display {
+    font-size: 3em; /* Tamaño grande para el glifo */
+    height: 1.5em;
+    line-height: 1.5em;
+    color: #2c3e50;
+}
+
+/* Información adicional (ID, Unicode) */
+.info-display {
+    font-size: 0.7em;
+    color: #7f8c8d;
+    margin-top: 5px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.hidden {
+    display: none !important;
+}
+
+#message {
+    color: #e67e22;
+    font-weight: bold;
+    margin-top: 15px;
+}
